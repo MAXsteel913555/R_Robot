@@ -1,0 +1,157 @@
+panels:
+  - name: Displays
+    type: rviz_common/Displays
+  - name: Views
+    type: rviz_common/Views
+  - name: Tool Properties
+    type: rviz_common/Tool Properties
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Name: Map
+      Class: rviz_default_plugins/Map
+      Enabled: true
+      Topic:
+        Value: /map
+        Depth: 50
+        Durability Policy: Transient Local
+        Reliability Policy: Reliable
+        History Policy: Keep Last
+      Alpha: 0.7
+      Color Scheme: map
+      Draw Behind: true
+    - Name: LaserScan
+      Class: rviz_default_plugins/LaserScan
+      Enabled: true
+      Topic:
+        Value: /scan
+        Depth: 50
+        Durability Policy: Volatile
+        Reliability Policy: Best Effort
+        History Policy: Keep Last
+      Size (Pixels): 5
+      Size (m): 0.1
+      Color: 255; 0; 0
+      Decay Time: 0
+    - Name: Global Costmap
+      Class: rviz_default_plugins/Map
+      Enabled: true
+      Topic:
+        Value: /global_costmap/costmap
+        Depth: 50
+        Durability Policy: Volatile
+        Reliability Policy: Reliable
+        History Policy: Keep Last
+      Alpha: 0.3
+      Color Scheme: costmap
+      Draw Behind: false
+    - Name: Local Costmap
+      Class: rviz_default_plugins/Map
+      Enabled: true
+      Topic:
+        Value: /local_costmap/costmap
+        Depth: 50
+        Durability Policy: Volatile
+        Reliability Policy: Reliable
+        History Policy: Keep Last
+      Alpha: 0.3
+      Color Scheme: costmap
+      Draw Behind: false
+    - Name: Global Path
+      Class: rviz_default_plugins/Path
+      Enabled: true
+      Topic:
+        Value: /plan
+        Depth: 50
+        Durability Policy: Volatile
+        Reliability Policy: Reliable
+        History Policy: Keep Last
+      Color: 0; 128; 255
+      Alpha: 1
+      Line Style: Lines
+      Line Width: 0.03
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0.01
+    - Name: Local Path
+      Class: rviz_default_plugins/Path
+      Enabled: true
+      Topic:
+        Value: /local_plan
+        Depth: 50
+        Durability Policy: Volatile
+        Reliability Policy: Reliable
+        History Policy: Keep Last
+      Color: 0; 255; 0
+      Alpha: 1
+      Line Style: Lines
+      Line Width: 0.02
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0.01
+    - Name: Odometry
+      Class: rviz_default_plugins/Odometry
+      Enabled: true
+      Topic:
+        Value: /odom
+        Depth: 50
+        Durability Policy: Volatile
+        Reliability Policy: Best Effort
+        History Policy: Keep Last
+      Arrow:
+        Length: 0.05
+        Width: 0.02
+      Color: 0; 255; 0
+      Keep: 100
+    - Name: TF
+      Class: rviz_default_plugins/TF
+      Enabled: true
+      Show Arrows: true
+      Show Axes: true
+      Show Names: true
+    - Name: Particle Cloud
+      Class: rviz_default_plugins/PoseArray
+      Enabled: true
+      Topic:
+        Value: /particle_cloud
+        Depth: 50
+        Durability Policy: Volatile
+        Reliability Policy: Best Effort
+        History Policy: Keep Last
+      Arrow Length: 0.02
+      Color: 255; 255; 0
+      Alpha: 0.5
+  Global Options:
+    Background Color: 48; 48; 48
+    Fixed Frame: map
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: nav2_rviz_plugins/GoalTool
+      Topic:
+        Value: /goal_pose
+    - Class: rviz_default_plugins/SetInitialPose
+      Topic:
+        Value: /initialpose
+    - Class: rviz_default_plugins/PublishPoint
+      Single Point: false
+      Topic:
+        Value: /clicked_point
+    - Class: rviz_default_plugins/Interact
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+  Value: true
+  Views:
+    Current:
+      Class: rviz_default_plugins/TopDownOrtho
+      Name: TopDownOrtho
+      Near Clip Distance: 0.01
+      Scale: 50
+      Target Frame: map
+      Value: TopDownOrtho (rviz)
+      X: 0
+      Y: 0
+window_height: 768
+window_width: 1024

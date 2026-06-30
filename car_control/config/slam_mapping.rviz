@@ -1,0 +1,66 @@
+panels:
+  - name: Displays
+    type: rviz_common/Displays
+  - name: Views
+    type: rviz_common/Views
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Name: Map
+      Class: rviz_default_plugins/Map
+      Enabled: true
+      Topic:
+        Value: /map
+        Depth: 5
+        Durability Policy: Transient Local
+        Reliability Policy: Reliable
+        History Policy: Keep Last
+      Alpha: 0.7
+      Color Scheme: map
+      Draw Behind: true
+      Update Topic:
+        Value: ""
+    - Name: LaserScan
+      Class: rviz_default_plugins/LaserScan
+      Enabled: true
+      Topic:
+        Value: /scan
+        Depth: 5
+        Durability Policy: Volatile
+        Reliability Policy: Best Effort
+        History Policy: Keep Last
+      Size (Pixels): 3
+      Size (m): 0.1
+      Color: 255; 0; 0
+      Decay Time: 0
+    - Name: TF
+      Class: rviz_default_plugins/TF
+      Enabled: true
+      Show Arrows: true
+      Show Axes: true
+      Show Names: true
+  Global Options:
+    Background Color: 48; 48; 48
+    Fixed Frame: map
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Name: Interact
+      Class: rviz_default_plugins/Interact
+    - Name: MoveCamera
+      Class: rviz_default_plugins/MoveCamera
+    - Name: Select
+      Class: rviz_default_plugins/Select
+  Value: true
+  Views:
+    Current:
+      Class: rviz_default_plugins/TopDownOrtho
+      Name: TopDownOrtho
+      Near Clip Distance: 0.01
+      Scale: 50
+      Target Frame: map
+      Value: TopDownOrtho (rviz)
+      X: 0
+      Y: 0
+window_height: 768
+window_width: 1024
