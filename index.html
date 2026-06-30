@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>RDK X5 Robot Controller</title>
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+body {
+    font-family: 'Courier New', monospace;
+    background: #0a0e17;
+    color: #00d4ff;
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+}
+
+/* Background grid */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background:
+        linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* ─── Sidebar ─────────────────────────────────────────────────────────────── */
+.sidebar {
+    position: relative;
+    z-index: 2;
+    width: 70px;
+    height: 100vh;
+    background: rgba(8, 12, 22, 0.95);
+    border-right: 1px solid rgba(0, 212, 255, 0.15);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px 0;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+.sidebar-logo {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    opacity: 0.8;
+}
+
+.nav-btn {
+    width: 50px;
+    height: 50px;
+    border: 1px solid rgba(0, 212, 255, 0.15);
+    background: transparent;
+    color: #4a6a7a;
+    border-radius: 10px;
+    font-size: 1.3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    gap: 2px;
+    touch-action: manipulation;
+}
+
+.nav-btn .nav-label {
+    font-size: 0.5rem;
+    letter-spacing: 0.5px;
+}
+
+.nav-btn:hover {
+    border-color: rgba(0, 212, 255, 0.4);
+    color: #7ab8cc;
+}
+
+.nav-btn.active {
+    background: rgba(0, 212, 255, 0.12);
+    border-color: #00d4ff;
+    color: #00d4ff;
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+}
+
+/* ─── Main Content ────────────────────────────────────────────────────────── */
+.main-content {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.page {
+    display: none;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    align-items: center;
+}
+
+.page.active {
+    display: flex;
+}
+
+/* ─── Control Page ────────────────────────────────────────────────────────── */
+#page-control {
+    justify-content: center;
+    gap: 20px;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.header {
+    text-align: center;
+    width: 100%;
+}
+
+.header h1 {
+    font-size: 1.3rem;
+    color: #00d4ff;
+    text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+    letter-spacing: 3px;
+    margin-bottom: 5px;
+}
+
+.header .subtitle {
+    font-size: 0.7rem;
+    color: #4a6a7a;
+    letter-spacing: 2px;
+}
+
+.status-bar {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: rgba(0, 212, 255, 0.05);
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    border-radius: 8px;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+}
+
+.status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #ff3333;
+    box-shadow: 0 0 6px #ff3333;
+    transition: all 0.3s;
+}
+
+.status-dot.connected {
+    background: #00ff88;
+    box-shadow: 0 0 6px #00ff88;
+}
+
+.speed-display {
+    font-size: 0.75rem;
+    color: #7ab8cc;
+}
+
+.speed-panel {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    gap: 10px;
+}
+
+.speed-group {
+    flex: 1;
+    background: rgba(0, 212, 255, 0.03);
+    border: 1px solid rgba(0, 212, 255, 0.15);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.speed-label {
+    font-size: 0.7rem;
+    color: #4a6a7a;
+    letter-spacing: 1px;
+}
+
+.speed-value {
+    font-size: 1.2rem;
+    color: #00d4ff;
+    text-shadow: 0 0 8px rgba(0, 212, 255, 0.4);
+}
+
+.speed-buttons {
+    display: flex;
+    gap: 6px;
+}
+
+.speed-btn {
+    width: 36px; height: 36px;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    background: rgba(0, 212, 255, 0.08);
+    color: #00d4ff;
+    border-radius: 6px;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    touch-action: manipulation;
+}
+
+.speed-btn:active {
+    background: rgba(0, 212, 255, 0.25);
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+    transform: scale(0.95);
+}
+
+.control-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    width: 280px;
+}
+
+.ctrl-btn {
+    width: 85px; height: 85px;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    background: rgba(0, 212, 255, 0.06);
+    color: #00d4ff;
+    border-radius: 12px;
+    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+}
+
+.ctrl-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: radial-gradient(circle at center, rgba(0, 212, 255, 0.2), transparent);
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.ctrl-btn:active, .ctrl-btn.active {
+    background: rgba(0, 212, 255, 0.2);
+    border-color: #00d4ff;
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.4), inset 0 0 20px rgba(0, 212, 255, 0.1);
+    transform: scale(0.95);
+}
+
+.ctrl-btn:active::before, .ctrl-btn.active::before {
+    opacity: 1;
+}
+
+.ctrl-btn.stop-btn {
+    border-color: rgba(255, 50, 50, 0.4);
+    color: #ff5555;
+}
+
+.ctrl-btn.stop-btn:active, .ctrl-btn.stop-btn.active {
+    background: rgba(255, 50, 50, 0.2);
+    border-color: #ff5555;
+    box-shadow: 0 0 20px rgba(255, 50, 50, 0.4);
+}
+
+.keyboard-hints {
+    width: 100%;
+    max-width: 400px;
+    padding: 10px 15px;
+    background: rgba(0, 212, 255, 0.03);
+    border: 1px solid rgba(0, 212, 255, 0.1);
+    border-radius: 8px;
+    font-size: 0.65rem;
+    color: #3a5a6a;
+    text-align: center;
+    line-height: 1.8;
+}
+
+.key {
+    display: inline-block;
+    padding: 1px 5px;
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    border-radius: 3px;
+    margin: 0 2px;
+    color: #5a8a9a;
+}
+
+/* ─── Camera Page ─────────────────────────────────────────────────────────── */
+#page-camera {
+    padding: 0;
+}
+
+.camera-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Desktop: camera fullscreen, hide all controls */
+@media (min-width: 768px) {
+    .camera-body {
+        flex: 1;
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+        padding: 0;
+        overflow: hidden;
+    }
+    .camera-controls-left,
+    .camera-controls-right,
+    .camera-speed-panel {
+        display: none !important;
+    }
+    .camera-view {
+        flex: 1;
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;
+        border: none;
+    }
+    .camera-view img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+}
+
+/* Mobile: hide desktop speed in controls-right */
+@media (max-width: 767px) {
+    .cam-desktop-speed {
+        display: none !important;
+    }
+}
+
+.camera-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid rgba(0, 212, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.camera-header h2 {
+    font-size: 1rem;
+    color: #00d4ff;
+    letter-spacing: 2px;
+    font-weight: normal;
+}
+
+.camera-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.camera-status {
+    font-size: 0.7rem;
+    color: #4a6a7a;
+}
+
+.camera-mode-select {
+    padding: 5px 10px;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    background: rgba(0, 212, 255, 0.08);
+    color: #00d4ff;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.camera-mode-select option {
+    background: #0a0e17;
+    color: #00d4ff;
+}
+
+.camera-toggle-btn {
+    padding: 6px 14px;
+    border: 1px solid rgba(0, 212, 255, 0.4);
+    background: rgba(0, 212, 255, 0.1);
+    color: #00d4ff;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    transition: all 0.2s;
+    touch-action: manipulation;
+    letter-spacing: 1px;
+}
+
+.camera-toggle-btn:hover {
+    background: rgba(0, 212, 255, 0.2);
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+}
+
+.camera-toggle-btn:active {
+    transform: scale(0.95);
+}
+
+.camera-toggle-btn.running {
+    border-color: rgba(255, 80, 80, 0.5);
+    background: rgba(255, 80, 80, 0.1);
+    color: #ff5555;
+}
+
+.camera-toggle-btn.running:hover {
+    background: rgba(255, 80, 80, 0.2);
+    box-shadow: 0 0 10px rgba(255, 80, 80, 0.3);
+}
+
+.camera-toggle-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.camera-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.camera-view {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: #000;
+    overflow: hidden;
+}
+
+.camera-view img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.camera-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #4a6a7a;
+    font-size: 1rem;
+}
+
+.camera-overlay.hidden {
+    display: none;
+}
+
+.camera-hint {
+    font-size: 0.7rem;
+    color: #3a5a6a;
+}
+
+.camera-speed-panel {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    padding: 8px 20px;
+}
+
+.cam-speed-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.cam-speed-label {
+    font-size: 0.6rem;
+    color: #4a6a7a;
+    width: 25px;
+}
+
+.cam-speed-val {
+    font-size: 0.85rem;
+    color: #00d4ff;
+    min-width: 35px;
+    text-align: center;
+}
+
+.camera-controls {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+    padding: 10px 20px;
+    max-width: 220px;
+    margin: 0 auto;
+}
+
+/* Mobile: hide left controls, show only bottom (right becomes bottom) */
+.camera-controls-left {
+    display: none;
+}
+
+.camera-controls-right {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+    padding: 10px 20px;
+    max-width: 220px;
+    margin: 0 auto;
+}
+
+.cam-btn {
+    width: 60px; height: 60px;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    background: rgba(0, 212, 255, 0.06);
+    color: #00d4ff;
+    border-radius: 10px;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    touch-action: manipulation;
+}
+
+.cam-btn:active, .cam-btn.active {
+    background: rgba(0, 212, 255, 0.2);
+    border-color: #00d4ff;
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
+    transform: scale(0.93);
+}
+
+.cam-btn.cam-stop {
+    border-color: rgba(255, 50, 50, 0.4);
+    color: #ff5555;
+}
+
+.cam-btn.cam-stop:active, .cam-btn.cam-stop.active {
+    background: rgba(255, 50, 50, 0.2);
+    border-color: #ff5555;
+    box-shadow: 0 0 15px rgba(255, 50, 50, 0.4);
+}
+
+/* ─── Chat Page ───────────────────────────────────────────────────────────── */
+#page-chat {
+    padding: 0;
+}
+
+.chat-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid rgba(0, 212, 255, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.chat-header h2 {
+    font-size: 1rem;
+    color: #00d4ff;
+    letter-spacing: 2px;
+    font-weight: normal;
+}
+
+.chat-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00d4ff, #0066ff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    overflow: hidden;
+}
+
+.chat-avatar img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+.chat-messages::-webkit-scrollbar {
+    width: 4px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+    background: rgba(0, 212, 255, 0.3);
+    border-radius: 2px;
+}
+
+.msg {
+    max-width: 80%;
+    padding: 10px 15px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.msg.user {
+    align-self: flex-end;
+    background: rgba(0, 212, 255, 0.15);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    color: #c0e8f5;
+    border-bottom-right-radius: 4px;
+}
+
+.msg.assistant {
+    align-self: flex-start;
+    background: rgba(30, 40, 60, 0.8);
+    border: 1px solid rgba(0, 212, 255, 0.1);
+    color: #a0c8d8;
+    border-bottom-left-radius: 4px;
+}
+
+.msg.system {
+    align-self: center;
+    font-size: 0.7rem;
+    color: #4a6a7a;
+    background: none;
+    border: none;
+    padding: 5px;
+}
+
+.msg.assistant .typing-dots::after {
+    content: '...';
+    animation: dots 1.2s infinite;
+}
+
+@keyframes dots {
+    0%, 20% { content: '.'; }
+    40% { content: '..'; }
+    60%, 100% { content: '...'; }
+}
+
+.chat-input-area {
+    padding: 15px 20px;
+    border-top: 1px solid rgba(0, 212, 255, 0.15);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    touch-action: manipulation;
+}
+
+.chat-input {
+    flex: 1;
+    padding: 12px 15px;
+    background: rgba(0, 212, 255, 0.05);
+    border: 1px solid rgba(0, 212, 255, 0.25);
+    border-radius: 8px;
+    color: #c0e8f5;
+    font-size: 0.9rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+.chat-input:focus {
+    border-color: #00d4ff;
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+}
+
+.chat-input::placeholder {
+    color: #3a5a6a;
+}
+
+.chat-send-btn {
+    width: 44px; height: 44px;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    background: rgba(0, 212, 255, 0.1);
+    color: #00d4ff;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    touch-action: manipulation;
+}
+
+.chat-send-btn:hover {
+    background: rgba(0, 212, 255, 0.2);
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+}
+
+.chat-send-btn:active {
+    transform: scale(0.95);
+}
+
+.chat-send-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* ─── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 500px) {
+    .sidebar { width: 55px; }
+    .nav-btn { width: 42px; height: 42px; font-size: 1.1rem; }
+    .nav-btn .nav-label { display: none; }
+    .control-pad { width: 240px; }
+    .ctrl-btn { width: 72px; height: 72px; font-size: 1.5rem; }
+    .chat-input-area { padding: 10px 15px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <div class="sidebar-logo">⬡</div>
+    <div class="nav-btn active" data-page="control" id="nav-control">
+        <span>🎮</span>
+        <span class="nav-label">控制</span>
+    </div>
+    <div class="nav-btn" data-page="camera" id="nav-camera">
+        <span>📷</span>
+        <span class="nav-label">图传</span>
+    </div>
+    <div class="nav-btn" data-page="chat" id="nav-chat">
+        <span>💬</span>
+        <span class="nav-label">聊天</span>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+
+    <!-- Control Page -->
+    <div class="page active" id="page-control">
+        <div class="header">
+            <h1>⬡ ROBOT CONTROL</h1>
+            <div class="subtitle">RDK X5 TELEOP SYSTEM</div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-indicator">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">DISCONNECTED</span>
+            </div>
+            <div class="speed-display" id="currentCmd">IDLE</div>
+        </div>
+
+        <div class="speed-panel">
+            <div class="speed-group">
+                <div class="speed-label">LINEAR m/s</div>
+                <div class="speed-value" id="linearValue">0.10</div>
+                <div class="speed-buttons">
+                    <div class="speed-btn" data-speed="linear" data-delta="-0.05">−</div>
+                    <div class="speed-btn" data-speed="linear" data-delta="0.05">+</div>
+                </div>
+            </div>
+            <div class="speed-group">
+                <div class="speed-label">ANGULAR rad/s</div>
+                <div class="speed-value" id="angularValue">0.10</div>
+                <div class="speed-buttons">
+                    <div class="speed-btn" data-speed="angular" data-delta="-0.1">−</div>
+                    <div class="speed-btn" data-speed="angular" data-delta="0.1">+</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-pad">
+            <div class="ctrl-btn" data-cmd="forward_left" id="btn_q">↖</div>
+            <div class="ctrl-btn" data-cmd="forward" id="btn_w">↑</div>
+            <div class="ctrl-btn" data-cmd="forward_right" id="btn_e">↗</div>
+            <div class="ctrl-btn" data-cmd="left" id="btn_a">←</div>
+            <div class="ctrl-btn stop-btn" data-cmd="stop" id="btn_s">■</div>
+            <div class="ctrl-btn" data-cmd="right" id="btn_d">→</div>
+            <div class="ctrl-btn" data-cmd="backward_left" id="btn_z">↙</div>
+            <div class="ctrl-btn" data-cmd="backward" id="btn_x">↓</div>
+            <div class="ctrl-btn" data-cmd="backward_right" id="btn_c">↘</div>
+        </div>
+
+        <div class="keyboard-hints">
+            KEYBOARD: <span class="key">Q</span><span class="key">W</span><span class="key">E</span>
+            <span class="key">A</span><span class="key">S</span><span class="key">D</span>
+            <span class="key">Z</span><span class="key">X</span><span class="key">C</span>
+            &nbsp;|&nbsp; SPEED: <span class="key">↑</span><span class="key">↓</span> linear
+            <span class="key">←</span><span class="key">→</span> angular
+        </div>
+    </div>
+
+    <!-- Camera Page -->
+    <div class="page" id="page-camera">
+        <div class="camera-container">
+            <div class="camera-header">
+                <h2>📷 CAMERA STREAM</h2>
+                <div class="camera-header-right">
+                    <div class="camera-status" id="cameraStatus">等待连接...</div>
+                    <select class="camera-mode-select" id="cameraModeSelect">
+                        <option value="stereo">双目深度估计</option>
+                        <option value="yolov5">YOLOv5 目标检测</option>
+                        <option value="raw">双目原始画面</option>
+                    </select>
+                    <button class="camera-toggle-btn" id="cameraToggleBtn" onclick="toggleCamera()">启动相机</button>
+                </div>
+            </div>
+            <div class="camera-body">
+                <div class="camera-controls camera-controls-left">
+                    <div class="cam-btn" data-cmd="forward_left">↖</div>
+                    <div class="cam-btn" data-cmd="forward">↑</div>
+                    <div class="cam-btn" data-cmd="forward_right">↗</div>
+                    <div class="cam-btn" data-cmd="left">←</div>
+                    <div class="cam-btn cam-stop" data-cmd="stop">■</div>
+                    <div class="cam-btn" data-cmd="right">→</div>
+                    <div class="cam-btn" data-cmd="backward_left">↙</div>
+                    <div class="cam-btn" data-cmd="backward">↓</div>
+                    <div class="cam-btn" data-cmd="backward_right">↘</div>
+                </div>
+                <div class="camera-view">
+                    <img id="cameraStream" src="/api/stream" alt="摄像头画面">
+                    <iframe id="cameraIframe" src="" style="display:none; width:100%; height:100%; border:none;"></iframe>
+                    <div class="camera-overlay" id="cameraOverlay">
+                        <span>📷 摄像头未启动</span>
+                        <span class="camera-hint">选择模式并点击启动相机</span>
+                    </div>
+                </div>
+                <div class="camera-controls camera-controls-right">
+                    <div class="cam-btn" data-cmd="forward_left">↖</div>
+                    <div class="cam-btn" data-cmd="forward">↑</div>
+                    <div class="cam-btn" data-cmd="forward_right">↗</div>
+                    <div class="cam-btn" data-cmd="left">←</div>
+                    <div class="cam-btn cam-stop" data-cmd="stop">■</div>
+                    <div class="cam-btn" data-cmd="right">→</div>
+                    <div class="cam-btn" data-cmd="backward_left">↙</div>
+                    <div class="cam-btn" data-cmd="backward">↓</div>
+                    <div class="cam-btn" data-cmd="backward_right">↘</div>
+                    <div class="cam-desktop-speed">
+                        <div class="cam-speed-group">
+                            <span class="cam-speed-label">线速</span>
+                            <div class="speed-btn" data-speed="linear" data-delta="-0.05">−</div>
+                            <span class="cam-speed-val" id="camLinearVal2">0.10</span>
+                            <div class="speed-btn" data-speed="linear" data-delta="0.05">+</div>
+                        </div>
+                        <div class="cam-speed-group">
+                            <span class="cam-speed-label">角速</span>
+                            <div class="speed-btn" data-speed="angular" data-delta="-0.1">−</div>
+                            <span class="cam-speed-val" id="camAngularVal2">0.10</span>
+                            <div class="speed-btn" data-speed="angular" data-delta="0.1">+</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="camera-speed-panel">
+                    <div class="cam-speed-group">
+                        <span class="cam-speed-label">LIN</span>
+                        <div class="speed-btn" data-speed="linear" data-delta="-0.05">−</div>
+                        <span class="cam-speed-val" id="camLinearVal">0.10</span>
+                        <div class="speed-btn" data-speed="linear" data-delta="0.05">+</div>
+                    </div>
+                    <div class="cam-speed-group">
+                        <span class="cam-speed-label">ANG</span>
+                        <div class="speed-btn" data-speed="angular" data-delta="-0.1">−</div>
+                        <span class="cam-speed-val" id="camAngularVal">0.10</span>
+                        <div class="speed-btn" data-speed="angular" data-delta="0.1">+</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Page -->
+    <div class="page" id="page-chat">
+        <div class="chat-container">
+            <div class="chat-header">
+                <div class="chat-avatar"><img src="/static/avatar.png" alt="智达"></div>
+                <h2>智达 ASSISTANT</h2>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="msg system">— 智能货物运输助手已就绪 —</div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" class="chat-input" id="chatInput" placeholder="输入消息..." autocomplete="off">
+                <button class="chat-send-btn" id="chatSendBtn" onclick="sendChat()">➤</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// ─── Page Navigation ─────────────────────────────────────────────────────────
+function switchPage(pageName) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('page-' + pageName).classList.add('active');
+    document.querySelector(`.nav-btn[data-page="${pageName}"]`).classList.add('active');
+}
+
+// ─── WebSocket (Control) ─────────────────────────────────────────────────────
+let ws = null;
+let linearSpeed = 0.10;
+let angularSpeed = 0.10;
+let reconnectTimer = null;
+let activeBtn = null;
+
+function connect() {
+    const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    ws = new WebSocket(`${protocol}//${location.host}/ws`);
+
+    ws.onopen = () => {
+        document.getElementById('statusDot').classList.add('connected');
+        document.getElementById('statusText').textContent = 'CONNECTED';
+        if (reconnectTimer) { clearInterval(reconnectTimer); reconnectTimer = null; }
+    };
+
+    ws.onclose = () => {
+        document.getElementById('statusDot').classList.remove('connected');
+        document.getElementById('statusText').textContent = 'DISCONNECTED';
+        document.getElementById('currentCmd').textContent = 'IDLE';
+        if (!reconnectTimer) { reconnectTimer = setInterval(connect, 2000); }
+    };
+
+    ws.onerror = () => { ws.close(); };
+}
+
+function send(cmd) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+            cmd: cmd,
+            linear_speed: linearSpeed,
+            angular_speed: angularSpeed
+        }));
+        document.getElementById('currentCmd').textContent = cmd.toUpperCase().replace('_', ' ');
+    }
+}
+
+// ─── Speed Control ───────────────────────────────────────────────────────────
+function adjustSpeed(type, delta) {
+    if (type === 'linear') {
+        linearSpeed = Math.max(0.05, Math.min(2.0, +(linearSpeed + delta).toFixed(2)));
+        document.getElementById('linearValue').textContent = linearSpeed.toFixed(2);
+        document.getElementById('camLinearVal').textContent = linearSpeed.toFixed(2);
+        const el2 = document.getElementById('camLinearVal2');
+        if (el2) el2.textContent = linearSpeed.toFixed(2);
+    } else {
+        angularSpeed = Math.max(0.1, Math.min(3.0, +(angularSpeed + delta).toFixed(2)));
+        document.getElementById('angularValue').textContent = angularSpeed.toFixed(2);
+        document.getElementById('camAngularVal').textContent = angularSpeed.toFixed(2);
+        const el2 = document.getElementById('camAngularVal2');
+        if (el2) el2.textContent = angularSpeed.toFixed(2);
+    }
+}
+
+// ─── Speed Buttons (touch-friendly) ────────────────────────────────────────
+document.querySelectorAll('.speed-btn').forEach(btn => {
+    function handleSpeed(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        adjustSpeed(btn.dataset.speed, parseFloat(btn.dataset.delta));
+    }
+    btn.addEventListener('touchend', handleSpeed);
+    btn.addEventListener('click', handleSpeed);
+});
+
+// ─── Control Buttons (touch + mouse) ─────────────────────────────────────────
+const buttons = document.querySelectorAll('.ctrl-btn');
+let ctrlTouching = false;  // track if a control button was touched
+
+function btnDown(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    ctrlTouching = true;
+    const cmd = this.dataset.cmd;
+    this.classList.add('active');
+    activeBtn = this;
+    send(cmd);
+}
+
+function btnUp(e) {
+    if (!ctrlTouching) return;  // only stop if a ctrl button was pressed
+    ctrlTouching = false;
+    if (activeBtn) { activeBtn.classList.remove('active'); activeBtn = null; }
+    // Send stop multiple times to ensure chassis receives it
+    send('stop');
+    setTimeout(() => send('stop'), 50);
+    setTimeout(() => send('stop'), 150);
+}
+
+buttons.forEach(btn => {
+    btn.addEventListener('mousedown', btnDown);
+    btn.addEventListener('touchstart', btnDown, { passive: false });
+});
+
+document.addEventListener('mouseup', btnUp);
+document.addEventListener('touchend', btnUp);
+document.addEventListener('touchcancel', btnUp);
+
+// ─── Keyboard Control ────────────────────────────────────────────────────────
+const keyMap = {
+    'q': 'forward_left',  'w': 'forward',   'e': 'forward_right',
+    'a': 'left',          's': 'stop',      'd': 'right',
+    'z': 'backward_left', 'x': 'backward',  'c': 'backward_right',
+};
+
+const keyState = {};
+
+document.addEventListener('keydown', (e) => {
+    // Don't capture keys when typing in chat input
+    if (e.target.id === 'chatInput') return;
+
+    const key = e.key.toLowerCase();
+    if (e.key === 'ArrowUp')    { adjustSpeed('linear', 0.05); return; }
+    if (e.key === 'ArrowDown')  { adjustSpeed('linear', -0.05); return; }
+    if (e.key === 'ArrowRight') { adjustSpeed('angular', 0.1); return; }
+    if (e.key === 'ArrowLeft')  { adjustSpeed('angular', -0.1); return; }
+
+    if (keyMap[key] && !keyState[key]) {
+        keyState[key] = true;
+        send(keyMap[key]);
+        const btn = document.getElementById('btn_' + key);
+        if (btn) btn.classList.add('active');
+    }
+});
+
+document.addEventListener('keyup', (e) => {
+    if (e.target.id === 'chatInput') return;
+    const key = e.key.toLowerCase();
+    if (keyMap[key]) {
+        keyState[key] = false;
+        const btn = document.getElementById('btn_' + key);
+        if (btn) btn.classList.remove('active');
+        if (!Object.values(keyState).some(v => v)) {
+            send('stop');
+            setTimeout(() => send('stop'), 50);
+            setTimeout(() => send('stop'), 150);
+        }
+    }
+});
+
+// ─── Chat ────────────────────────────────────────────────────────────────────
+let chatBusy = false;
+
+const chatInput = document.getElementById('chatInput');
+const chatSendBtn = document.getElementById('chatSendBtn');
+const chatMessages = document.getElementById('chatMessages');
+
+chatInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendChat();
+    }
+});
+
+function addMessage(role, text) {
+    const div = document.createElement('div');
+    div.className = 'msg ' + role;
+    div.textContent = text;
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    return div;
+}
+
+async function sendChat() {
+    const text = chatInput.value.trim();
+    if (!text || chatBusy) return;
+
+    chatBusy = true;
+    chatSendBtn.disabled = true;
+    chatInput.value = '';
+
+    addMessage('user', text);
+    const thinkingDiv = addMessage('assistant', '');
+    thinkingDiv.innerHTML = '<span class="typing-dots"></span>';
+
+    try {
+        const resp = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text })
+        });
+        const data = await resp.json();
+        thinkingDiv.textContent = data.reply || '(无响应)';
+        if (data.action) {
+            const a = data.action;
+            let actionText = '🚗 ';
+            if (a.action === 'stop') {
+                actionText += '已停止';
+            } else {
+                actionText += `${a.action} | 线速 ${a.linear.toFixed(2)} m/s | 角速 ${a.angular.toFixed(2)} rad/s | ${a.duration}s`;
+            }
+            addMessage('system', actionText);
+        }
+    } catch (err) {
+        thinkingDiv.textContent = '连接错误: ' + err.message;
+        thinkingDiv.style.color = '#ff5555';
+    }
+
+    chatBusy = false;
+    chatSendBtn.disabled = false;
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// ─── Nav Buttons (touch-friendly) ────────────────────────────────────────────
+document.querySelectorAll('.nav-btn').forEach(btn => {
+    const page = btn.dataset.page;
+    btn.addEventListener('touchend', function(e) {
+        e.preventDefault(); e.stopPropagation(); switchPage(page);
+    });
+    btn.addEventListener('click', function() {
+        switchPage(page);
+    });
+});
+
+// Camera controls
+const camButtons = document.querySelectorAll('.cam-btn');
+let camActiveBtn = null;
+
+camButtons.forEach(btn => {
+    function camDown(e) {
+        e.preventDefault(); e.stopPropagation();
+        camActiveBtn = btn;
+        btn.classList.add('active');
+        send(btn.dataset.cmd);
+    }
+    function camUp(e) {
+        e.preventDefault(); e.stopPropagation();
+        if (camActiveBtn) { camActiveBtn.classList.remove('active'); camActiveBtn = null; }
+        send('stop');
+        setTimeout(() => send('stop'), 50);
+        setTimeout(() => send('stop'), 150);
+    }
+    btn.addEventListener('mousedown', camDown);
+    btn.addEventListener('touchstart', camDown, { passive: false });
+    btn.addEventListener('mouseup', camUp);
+    btn.addEventListener('touchend', camUp);
+});
+
+// ─── Camera Control ──────────────────────────────────────────────────────────
+const cameraToggleBtn = document.getElementById('cameraToggleBtn');
+const cameraModeSelect = document.getElementById('cameraModeSelect');
+const cameraStreamImg = document.getElementById('cameraStream');
+const cameraIframe = document.getElementById('cameraIframe');
+let cameraRunning = false;
+let currentCameraMode = 'stereo';
+
+async function toggleCamera() {
+    cameraToggleBtn.disabled = true;
+    const action = cameraRunning ? 'stop' : 'start';
+    const mode = cameraModeSelect.value;
+    try {
+        const resp = await fetch('/api/camera', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: action, mode: mode })
+        });
+        const data = await resp.json();
+        if (data.ok) {
+            if (action === 'start') {
+                cameraRunning = true;
+                currentCameraMode = mode;
+                updateCameraView();
+            } else {
+                cameraRunning = false;
+                hideCameraViews();
+            }
+            updateCameraBtn();
+        }
+    } catch (e) {
+        console.error('Camera toggle error:', e);
+    }
+    cameraToggleBtn.disabled = false;
+}
+
+function updateCameraView() {
+    // Wait for camera to initialize
+    document.getElementById('cameraOverlay').classList.add('hidden');
+    var waitTime = (currentCameraMode === 'yolov5') ? 8000 : 5000;
+    setTimeout(() => {
+        if (currentCameraMode === 'stereo') {
+            // Stereo mode: use MJPEG stream from web_controller
+            cameraStreamImg.style.display = 'block';
+            cameraIframe.style.display = 'none';
+            cameraStreamImg.src = '/api/stream?' + Date.now();
+        } else if (currentCameraMode === 'yolov5') {
+            // YOLOv5 mode: use websocket node page on port 8000
+            cameraStreamImg.style.display = 'none';
+            cameraIframe.style.display = 'block';
+            cameraIframe.src = 'http://' + location.hostname + ':8000/TogetheROS/';
+        } else if (currentCameraMode === 'raw') {
+            // Raw dual camera: use MJPEG stream from web_controller
+            cameraStreamImg.style.display = 'block';
+            cameraIframe.style.display = 'none';
+            cameraStreamImg.src = '/api/stream?' + Date.now();
+        }
+    }, waitTime);
+}
+
+function hideCameraViews() {
+    cameraStreamImg.style.display = 'none';
+    cameraIframe.style.display = 'none';
+    cameraIframe.src = '';
+    document.getElementById('cameraOverlay').classList.remove('hidden');
+}
+
+function updateCameraBtn() {
+    if (cameraRunning) {
+        cameraToggleBtn.textContent = '关闭相机';
+        cameraToggleBtn.classList.add('running');
+        cameraModeSelect.disabled = true;
+    } else {
+        cameraToggleBtn.textContent = '启动相机';
+        cameraToggleBtn.classList.remove('running');
+        cameraModeSelect.disabled = false;
+    }
+}
+
+// Check camera status on load
+fetch('/api/camera').then(r => r.json()).then(data => {
+    cameraRunning = data.running;
+    currentCameraMode = data.mode || 'stereo';
+    cameraModeSelect.value = currentCameraMode;
+    updateCameraBtn();
+    if (cameraRunning) {
+        updateCameraView();
+    }
+}).catch(() => {});
+
+// Camera stream load detection
+const cameraImg = document.getElementById('cameraStream');
+const cameraOverlay = document.getElementById('cameraOverlay');
+const cameraStatus = document.getElementById('cameraStatus');
+
+cameraImg.onload = function() {
+    cameraOverlay.classList.add('hidden');
+    cameraStatus.textContent = '• LIVE';
+    cameraStatus.style.color = '#00ff88';
+};
+cameraImg.onerror = function() {
+    // Only show overlay and retry if using MJPEG modes (not iframe/yolov5)
+    if (currentCameraMode === 'yolov5') return;
+    cameraOverlay.classList.remove('hidden');
+    cameraStatus.textContent = '无信号';
+    cameraStatus.style.color = '#ff5555';
+    // Retry after 3 seconds
+    if (cameraRunning) {
+        setTimeout(() => { cameraImg.src = '/api/stream?' + Date.now(); }, 3000);
+    }
+};
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+connect();
+</script>
+</body>
+</html>
