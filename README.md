@@ -1,16 +1,16 @@
 # R_Robot
-这是参加第9届全国大学生嵌入式芯片与系统设计竞赛地瓜机器人赛道的参赛作品。
+This is a submission for the 9th National College Student Embedded Chip and System Design Competition, under the D-Robotics track.
 
-本作品针对复杂室内场景下物资转运的行业需求，设计并实现了一款基于RDK X5边缘AI平台的端云协同多模态物流机器人系统。
+This project addresses the industry demand for material transport in complex indoor environments by designing and implementing a cloud-edge collaborative multimodal logistics robot system based on the RDK X5 edge AI platform.
 
-系统打通了边缘计算、多源传感器融合与云端大语言模型的全栈链路。实现了从语义理解到敏捷执行的具身智能控制闭环。系统采用分布式异构计算架构，以RDK X5作为核心算法母体，集成激光雷达、深度相机与IMU多源传感器，下位机则针对紧凑空间需求，自主设计了一款简易插拔式STM32F1控制板，此外还有一块简易的拓展板。上下位机通过ROS2通信框架实现高效协同。
+The system establishes a full-stack pipeline that integrates edge computing, multi-source sensor fusion, and cloud-based large language models, achieving an embodied intelligent control loop from semantic understanding to agile execution. The system adopts a distributed heterogeneous computing architecture, with the RDK X5 serving as the core algorithm hub, integrating LiDAR, a depth camera, and an IMU as multi-source sensors. For the lower-level controller, a custom-designed, plug-and-play STM32F1 control board was developed to meet compact space requirements, along with a simplified expansion board. Efficient collaboration between the upper and lower controllers is achieved through the ROS2 communication framework.
 
-针对传统建图易飞图的痛点，系统引入扩展卡尔曼滤波算法，将全向航位推算与IMU数据深度融合，提供鲁棒的里程计基准，上层通过SLAM_Toolbox有效抑制建图重影，结合Navigation2框架实现全局最优路径规划与局部敏捷避障。
+To address the common issue of mapping drift in traditional SLAM systems, an Extended Kalman Filter algorithm is introduced, deeply fusing omnidirectional dead reckoning with IMU data to provide a robust odometry reference. At the upper layer, SLAM_Toolbox effectively suppresses mapping ghosting, while the Navigation2 framework enables global optimal path planning and local agile obstacle avoidance.
 
-针对现场部署繁琐的痛点，团队自主开发了跨平台配套客户端，软件集成局域网IP动态扫描寻址，并创新支持NFC一键连接。实现“触碰即唤醒”的B/S端控制体验。打通了“开箱即用”的用户体验。
+To tackle the pain point of cumbersome on-site deployment, the team independently developed a cross-platform companion client. The software integrates dynamic IP scanning for LAN addressing and innovatively supports one-tap NFC connection, enabling a "tap-to-wake" B/S-based control experience and delivering a true "out-of-the-box" user experience.
 
-在远程控制端，系统构建多源视觉感知分时调阅系统，依托RDK X5的10TOPS BPU算力，支持高清原始画面、YOLOv5实时目标检测及深度空间热力图的一键敏捷切换。
+For the remote control terminal, a multi-source visual perception time-sharing access system is built. Leveraging the 10 TOPS BPU computing power of the RDK X5, it supports one-tap agile switching between high-definition raw video, YOLOv5 real-time object detection, and depth spatial heatmaps.
 
-此外，系统还集成了DeepSeek云端大语言模型API，构建了多模态交互体系，机器人支持文字与语音的自然语言对话，实现了“复杂时序运动指令—大模型语义推理与动作解耦—底层精准驱动”的具身智能控制闭环。
+Furthermore, the system integrates the DeepSeek cloud-based large language model API to construct a multimodal interaction framework. The robot supports natural language dialogue via both text and voice, realizing an embodied intelligent control loop that spans "complex temporal motion commands — LLM semantic reasoning and action decomposition — precise low-level actuation."
 
-本仓库存放了是下位机STM32F1的控制程序和ros2_ws的相关功能包，仅供参考。
+This repository contains the STM32F1 lower-level control programs and the relevant functional packages for ros2_ws, provided for reference only.
